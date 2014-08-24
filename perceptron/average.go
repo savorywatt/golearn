@@ -44,7 +44,7 @@ func (p *AveragePerceptron) average() {
 	p.count++
 }
 
-func (p *AveragePerceptron) score(datum map[string]float64) float64 {
+func (p *AveragePerceptron) score(datum map[string][]float64) float64 {
 	score := 0.0
 
 	for k, wv := range p.weights {
@@ -125,9 +125,31 @@ func (p *AveragePerceptron) Predict(what base.FixedDataGrid) base.FixedDataGrid 
 	return ret
 }
 
-func processData(trainingData base.FixedDataGrid) []map[string]float64 {
+func processData(x base.FixedDataGrid) map[string][]float64 {
+	_, rows := x.Size()
 
-	return make([]map[string]float64, 0)
+	result := make(map[string][]float64, rows)
+
+	// Retrieve numeric non-class Attributes
+	numericAttrs := base.NonClassFloatAttributes(x)
+	numericAttrSpecs := base.ResolveAttributes(x, numericAttrs)
+
+	// Convert each row
+	x.MapOverRows(numericAttrSpecs, func(row [][]byte, rowNo int) (bool, error) {
+		// Allocate a new row
+		probRow := make([]float64, len(numericAttrSpecs))
+		// Read out the row
+		for i, _ := range numericAttrSpecs {
+			probRow[i] = base.UnpackBytesToFloat(row[i])
+		}
+		// Get the class for the values
+		class := base.GetClass(x, rowNo)
+		// Add the row
+		result[class] = probRow
+		return true, nil
+	})
+
+	return result
 }
 
 func NewAveragePerceptron(
