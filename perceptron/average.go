@@ -22,9 +22,7 @@ type AveragePerceptron struct {
 func (p *AveragePerceptron) updateWeights(features map[string]float64, correction float64) {
 
 	for k, _ := range p.weights {
-
 		fv, ok := features[k]
-
 		if ok {
 			update := p.learningRate * correction * fv
 			p.weights[k] = update
@@ -104,27 +102,27 @@ func (p *AveragePerceptron) Predict(what base.FixedDataGrid) base.FixedDataGrid 
 	data := processData(what)
 
 	allAttrs := base.CheckCompatable(what, p.TrainingData)
-	allBinary := make([]base.Attribute, 0)
 	if allAttrs == nil {
 		// Don't have the same Attributes
 		return nil
 	}
 
-	// Filter for only binary attributes
-	for _, attribute := range allAttrs {
-		if binaryAttribute, ok := attribute.(*base.BinaryAttribute); ok {
-			allBinary = append(allBinary, binaryAttribute)
+	// Remove the Attributes which aren't numeric
+	allNumericAttrs := make([]base.Attribute, 0)
+	for _, a := range allAttrs {
+		if fAttr, ok := a.(*base.FloatAttribute); ok {
+			allNumericAttrs = append(allNumericAttrs, fAttr)
 		}
 	}
 
-	//classAttrs := what.AllClassAttributes()
+	ret := base.GeneratePredictionVector(what)
 
 	for _, datum := range data {
 		result := p.score(datum)
 		println(result)
 	}
 
-	return nil
+	return ret
 }
 
 func processData(trainingData base.FixedDataGrid) []map[string]float64 {
