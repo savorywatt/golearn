@@ -1,7 +1,7 @@
 package perceptron
 
 import (
-	"math"
+	"log"
 
 	base "github.com/sjwhitworth/golearn/base"
 )
@@ -50,7 +50,9 @@ func (p *AveragePerceptron) score(datum map[string][]float64) float64 {
 	for k, wv := range p.weights {
 		dv, ok := datum[k]
 		if ok {
-			score += dv * wv
+			//		score += dv * wv
+			println(dv)
+			println(wv)
 		}
 	}
 
@@ -71,14 +73,15 @@ func (p *AveragePerceptron) Fit(trainingData base.FixedDataGrid) {
 
 	for learning {
 		for _, datum := range data {
-			response := p.score(datum)
-			expected := 0.0
-			correction := expected - response
+			//response := p.score(datum)
+			//expected := 0.0
+			//correction := expected - response
 
-			if expected != response {
-				p.updateWeights(datum, correction)
-				p.trainError += math.Abs(correction)
-			}
+			//if expected != response {
+			//	p.updateWeights(datum, correction)
+			//	p.trainError += math.Abs(correction)
+			//}
+			println(datum)
 		}
 
 		epochs++
@@ -118,8 +121,9 @@ func (p *AveragePerceptron) Predict(what base.FixedDataGrid) base.FixedDataGrid 
 	ret := base.GeneratePredictionVector(what)
 
 	for _, datum := range data {
-		result := p.score(datum)
-		println(result)
+		//result := p.score(datum)
+		//println(result)
+		println(datum)
 	}
 
 	return ret
@@ -129,6 +133,7 @@ func processData(x base.FixedDataGrid) map[string][]float64 {
 	_, rows := x.Size()
 
 	result := make(map[string][]float64, rows)
+	log.Printf("Making map of %d entries", rows)
 
 	// Retrieve numeric non-class Attributes
 	numericAttrs := base.NonClassFloatAttributes(x)
@@ -148,7 +153,7 @@ func processData(x base.FixedDataGrid) map[string][]float64 {
 		result[class] = probRow
 		return true, nil
 	})
-
+	log.Printf("Created map of %d entries", len(result))
 	return result
 }
 
