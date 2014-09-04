@@ -24,9 +24,6 @@ func TestProcessData(t *testing.T) {
 	_, size := trainData.Size()
 
 	if len(result) != size {
-
 		t.Errorf("Expected %d, Got %d", size, len(result))
-
 	}
-
 }

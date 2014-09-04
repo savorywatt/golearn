@@ -19,6 +19,13 @@ type AveragePerceptron struct {
 	count        float64
 }
 
+type instance struct {
+	class    string
+	features []float64
+}
+
+type instances []instance
+
 func (p *AveragePerceptron) updateWeights(features map[string]float64, correction float64) {
 
 	for k, _ := range p.weights {
@@ -81,7 +88,7 @@ func (p *AveragePerceptron) Fit(trainingData base.FixedDataGrid) {
 			//	p.updateWeights(datum, correction)
 			//	p.trainError += math.Abs(correction)
 			//}
-			println(datum)
+			println(datum.class)
 		}
 
 		epochs++
@@ -123,16 +130,16 @@ func (p *AveragePerceptron) Predict(what base.FixedDataGrid) base.FixedDataGrid 
 	for _, datum := range data {
 		//result := p.score(datum)
 		//println(result)
-		println(datum)
+		println(datum.class)
 	}
 
 	return ret
 }
 
-func processData(x base.FixedDataGrid) map[string][]float64 {
+func processData(x base.FixedDataGrid) instances {
 	_, rows := x.Size()
 
-	result := make(map[string][]float64, rows)
+	result := make(instances, rows)
 	log.Printf("Making map of %d entries", rows)
 
 	// Retrieve numeric non-class Attributes
@@ -143,14 +150,16 @@ func processData(x base.FixedDataGrid) map[string][]float64 {
 	x.MapOverRows(numericAttrSpecs, func(row [][]byte, rowNo int) (bool, error) {
 		// Allocate a new row
 		probRow := make([]float64, len(numericAttrSpecs))
+
 		// Read out the row
 		for i, _ := range numericAttrSpecs {
 			probRow[i] = base.UnpackBytesToFloat(row[i])
 		}
+
 		// Get the class for the values
 		class := base.GetClass(x, rowNo)
-		// Add the row
-		result[class] = probRow
+		instance := instance{class, probRow}
+		result[rowNo] = instance
 		return true, nil
 	})
 	log.Printf("Created map of %d entries", len(result))
