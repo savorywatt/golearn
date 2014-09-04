@@ -27,3 +27,13 @@ func TestProcessData(t *testing.T) {
 		t.Errorf("Expected %d, Got %d", size, len(result))
 	}
 }
+
+func TestCreateAveragePerceptron(t *testing.T) {
+
+	a := NewAveragePerceptron(10, 1.2, 0.5, 0.3)
+
+	if a == nil {
+
+		t.Errorf("Unable to create average perceptron")
+	}
+}

@@ -1,17 +1,13 @@
 package perceptron
 
-import (
-	"log"
-
-	base "github.com/sjwhitworth/golearn/base"
-)
+import base "github.com/sjwhitworth/golearn/base"
 
 const MaxEpochs = 10
 
 type AveragePerceptron struct {
 	TrainingData base.FixedDataGrid
-	weights      map[string]float64
-	edges        map[string]float64
+	weights      []float64
+	edges        []float64
 	threshold    float64
 	learningRate float64
 	trainError   float64
@@ -26,14 +22,14 @@ type instance struct {
 
 type instances []instance
 
-func (p *AveragePerceptron) updateWeights(features map[string]float64, correction float64) {
+func (p *AveragePerceptron) updateWeights(features []float64, correction float64) {
 
-	for k, _ := range p.weights {
-		fv, ok := features[k]
-		if ok {
-			update := p.learningRate * correction * fv
-			p.weights[k] = update
-			p.edges[k]++
+	for i, _ := range p.weights {
+		fv := &features[i]
+		if fv != nil {
+			update := p.learningRate * correction * *fv
+			p.weights[i] = update
+			p.edges[i]++
 		}
 	}
 
@@ -42,23 +38,23 @@ func (p *AveragePerceptron) updateWeights(features map[string]float64, correctio
 
 func (p *AveragePerceptron) average() {
 
-	for feature, fcount := range p.edges {
-		wv, ok := p.weights[feature]
-		if ok {
-			p.weights[feature] = (p.count*wv + fcount) / (fcount + 1)
+	for i, fcount := range p.edges {
+		wv := &p.weights[i]
+		if wv != nil {
+			p.weights[i] = (p.count**wv + fcount) / (fcount + 1)
 		}
 	}
 	p.count++
 }
 
-func (p *AveragePerceptron) score(datum map[string][]float64) float64 {
+func (p *AveragePerceptron) score(datum instance) float64 {
 	score := 0.0
 
-	for k, wv := range p.weights {
-		dv, ok := datum[k]
-		if ok {
+	for i, wv := range p.weights {
+		dv := &datum.features[i]
+		if dv != nil {
 			//		score += dv * wv
-			println(dv)
+			println(*dv)
 			println(wv)
 		}
 	}
@@ -140,7 +136,6 @@ func processData(x base.FixedDataGrid) instances {
 	_, rows := x.Size()
 
 	result := make(instances, rows)
-	log.Printf("Making map of %d entries", rows)
 
 	// Retrieve numeric non-class Attributes
 	numericAttrs := base.NonClassFloatAttributes(x)
@@ -162,15 +157,13 @@ func processData(x base.FixedDataGrid) instances {
 		result[rowNo] = instance
 		return true, nil
 	})
-	log.Printf("Created map of %d entries", len(result))
 	return result
 }
 
-func NewAveragePerceptron(
-	learningRate float64, startingThreshold float64, trainError float64) *AveragePerceptron {
+func NewAveragePerceptron(features int, learningRate float64, startingThreshold float64, trainError float64) *AveragePerceptron {
 
-	weights := make(map[string]float64)
-	edges := make(map[string]float64)
+	weights := make([]float64, features)
+	edges := make([]float64, features)
 
 	p := AveragePerceptron{nil, weights, edges, startingThreshold, learningRate, trainError, false, 0}
 
