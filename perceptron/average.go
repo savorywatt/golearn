@@ -1,6 +1,10 @@
 package perceptron
 
-import base "github.com/sjwhitworth/golearn/base"
+import (
+	"math"
+
+	base "github.com/sjwhitworth/golearn/base"
+)
 
 const MaxEpochs = 10
 
@@ -73,17 +77,16 @@ func (p *AveragePerceptron) Fit(trainingData base.FixedDataGrid) {
 	learning := true
 
 	data := processData(trainingData)
-
 	for learning {
 		for _, datum := range data {
-			//response := p.score(datum)
-			//expected := 0.0
-			//correction := expected - response
+			response := p.score(datum)
+			expected := 0.0
+			correction := expected - response
 
-			//if expected != response {
-			//	p.updateWeights(datum, correction)
-			//	p.trainError += math.Abs(correction)
-			//}
+			if expected != response {
+				//p.updateWeights(datum, correction)
+				p.trainError += math.Abs(correction)
+			}
 			println(datum.class)
 		}
 

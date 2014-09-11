@@ -28,6 +28,30 @@ func TestProcessData(t *testing.T) {
 	}
 }
 
+func TestFit(t *testing.T) {
+
+	a := NewAveragePerceptron(10, 1.2, 0.5, 0.3)
+
+	if a == nil {
+
+		t.Errorf("Unable to create average perceptron")
+	}
+
+	absPath, _ := filepath.Abs("../examples/datasets/house-votes-84.csv")
+	rawData, err := base.ParseCSVToInstances(absPath, true)
+	if err != nil {
+		t.Fail()
+	}
+
+	trainData, _ := base.InstancesTrainTestSplit(rawData, 0.5)
+	a.Fit(trainData)
+
+	if a.trained == false {
+		t.Errorf("Perceptron was not trained")
+	}
+
+}
+
 func TestCreateAveragePerceptron(t *testing.T) {
 
 	a := NewAveragePerceptron(10, 1.2, 0.5, 0.3)
@@ -35,5 +59,17 @@ func TestCreateAveragePerceptron(t *testing.T) {
 	if a == nil {
 
 		t.Errorf("Unable to create average perceptron")
+	}
+}
+
+func BenchmarkFit(b *testing.B) {
+
+	a := NewAveragePerceptron(10, 1.2, 0.5, 0.3)
+	absPath, _ := filepath.Abs("../examples/datasets/house-votes-84.csv")
+	rawData, _ := base.ParseCSVToInstances(absPath, true)
+	trainData, _ := base.InstancesTrainTestSplit(rawData, 0.5)
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		a.Fit(trainData)
 	}
 }
