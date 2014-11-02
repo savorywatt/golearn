@@ -1,10 +1,11 @@
 package perceptron
 
 import (
+	"fmt"
+	"github.com/sjwhitworth/golearn/base"
+	"github.com/sjwhitworth/golearn/evaluation"
 	"path/filepath"
 	"testing"
-
-	"github.com/sjwhitworth/golearn/base"
 )
 
 func TestProcessData(t *testing.T) {
@@ -43,13 +44,45 @@ func TestFit(t *testing.T) {
 		t.Fail()
 	}
 
-	trainData, _ := base.InstancesTrainTestSplit(rawData, 0.5)
+	trainData, _ := base.InstancesTrainTestSplit(rawData, 0.7)
 	a.Fit(trainData)
 
 	if a.trained == false {
 		t.Errorf("Perceptron was not trained")
 	}
 
+}
+
+func TestPredict(t *testing.T) {
+
+	a := NewAveragePerceptron(10, 1.2, 0.5, 0.3)
+
+	if a == nil {
+
+		t.Errorf("Unable to create average perceptron")
+	}
+
+	absPath, _ := filepath.Abs("../examples/datasets/house-votes-84.csv")
+	rawData, err := base.ParseCSVToInstances(absPath, true)
+	if err != nil {
+		t.Fail()
+	}
+
+	trainData, testData := base.InstancesTrainTestSplit(rawData, 0.5)
+	a.Fit(trainData)
+
+	if a.trained == false {
+		t.Errorf("Perceptron was not trained")
+	}
+
+	predictions := a.Predict(testData)
+	cf := evaluation.GetConfusionMatrix(testData, predictions)
+	fmt.Println(evaluation.GetSummary(cf))
+	fmt.Println(trainData)
+	fmt.Println(testData)
+	if evaluation.GetAccuracy(cf) < 0.65 {
+		t.Errorf("Perceptron not trained correctly")
+	}
 }
 
 func TestCreateAveragePerceptron(t *testing.T) {

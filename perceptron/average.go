@@ -1,9 +1,8 @@
 package perceptron
 
 import (
-	"math"
-
 	base "github.com/sjwhitworth/golearn/base"
+	"math"
 )
 
 const MaxEpochs = 10
@@ -12,6 +11,7 @@ type AveragePerceptron struct {
 	TrainingData base.FixedDataGrid
 	weights      []float64
 	edges        []float64
+	bias         float64
 	threshold    float64
 	learningRate float64
 	trainError   float64
@@ -55,12 +55,7 @@ func (p *AveragePerceptron) score(datum instance) float64 {
 	score := 0.0
 
 	for i, wv := range p.weights {
-		dv := &datum.features[i]
-		if dv != nil {
-			//		score += dv * wv
-			println(*dv)
-			println(wv)
-		}
+		score += datum.features[i] * wv
 	}
 
 	if score >= p.threshold {
@@ -84,10 +79,9 @@ func (p *AveragePerceptron) Fit(trainingData base.FixedDataGrid) {
 			correction := expected - response
 
 			if expected != response {
-				//p.updateWeights(datum, correction)
+				p.updateWeights(datum.features, correction)
 				p.trainError += math.Abs(correction)
 			}
-			println(datum.class)
 		}
 
 		epochs++
@@ -97,7 +91,9 @@ func (p *AveragePerceptron) Fit(trainingData base.FixedDataGrid) {
 		}
 	}
 
+	p.average()
 	p.trained = true
+	p.TrainingData = trainingData
 }
 
 // param base.IFixedDataGrid
@@ -125,11 +121,19 @@ func (p *AveragePerceptron) Predict(what base.FixedDataGrid) base.FixedDataGrid 
 	}
 
 	ret := base.GeneratePredictionVector(what)
+	classAttr := ret.AllClassAttributes()[0]
+	classSpec, err := ret.GetAttribute(classAttr)
+	if err != nil {
+		panic(err)
+	}
 
-	for _, datum := range data {
-		//result := p.score(datum)
-		//println(result)
-		println(datum.class)
+	for i, datum := range data {
+		result := p.score(datum)
+		if result > 0.0 {
+			ret.Set(classSpec, i, base.PackU64ToBytes(1))
+		} else {
+			ret.Set(classSpec, 1, []byte{0, 0, 0, 0, 0, 0, 0, 0})
+		}
 	}
 
 	return ret
@@ -143,6 +147,24 @@ func processData(x base.FixedDataGrid) instances {
 	// Retrieve numeric non-class Attributes
 	numericAttrs := base.NonClassFloatAttributes(x)
 	numericAttrSpecs := base.ResolveAttributes(x, numericAttrs)
+
+	// Retrieve class Attributes
+	classAttrs := x.AllClassAttributes()
+	if len(classAttrs) != 1 {
+		panic("Only one classAttribute supported!")
+	}
+
+	// Check that the class Attribute is categorical
+	// (with two values) or binary
+	classAttr := classAttrs[0]
+	if attr, ok := classAttr.(*base.CategoricalAttribute); ok {
+		if len(attr.GetValues()) != 2 {
+			panic("To many values for Attribute!")
+		}
+	} else if _, ok := classAttr.(*base.BinaryAttribute); ok {
+	} else {
+		panic("Wrong class Attribute type!")
+	}
 
 	// Convert each row
 	x.MapOverRows(numericAttrSpecs, func(row [][]byte, rowNo int) (bool, error) {
@@ -168,7 +190,7 @@ func NewAveragePerceptron(features int, learningRate float64, startingThreshold 
 	weights := make([]float64, features)
 	edges := make([]float64, features)
 
-	p := AveragePerceptron{nil, weights, edges, startingThreshold, learningRate, trainError, false, 0}
+	p := AveragePerceptron{nil, weights, edges, startingThreshold, learningRate, trainError, 0.0, false, 0}
 
 	return &p
 }
